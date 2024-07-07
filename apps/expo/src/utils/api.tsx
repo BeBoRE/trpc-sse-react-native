@@ -14,10 +14,18 @@ import { getBaseUrl } from "./base-url";
 export const api = createTRPCReact<AppRouter>();
 export { type RouterInputs, type RouterOutputs } from "@acme/api";
 
-import { EventSourcePolyfill } from 'event-source-polyfill';
+import { NativeEventSource, EventSourcePolyfill } from 'event-source-polyfill';
+
+import { ReadableStream, TransformStream } from 'web-streams-polyfill';
 
 // @ts-expect-error - Polyfill EventSource for React Native
-global.EventSource = EventSourcePolyfill;
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+global.EventSource = NativeEventSource || EventSourcePolyfill;
+
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+global.ReadableStream = global.ReadableStream || ReadableStream;
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+global.TransformStream = global.TransformStream || TransformStream;
 
 declare global {
   interface EventSourceInit {

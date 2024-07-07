@@ -1,7 +1,6 @@
 "use client";
 
 import type { RouterOutputs } from "@acme/api";
-import { CreatePostSchema } from "@acme/db/schema";
 import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 import {
@@ -14,12 +13,13 @@ import {
 } from "@acme/ui/form";
 import { Input } from "@acme/ui/input";
 import { toast } from "@acme/ui/toast";
+import { createPostSchema } from "@acme/validators";
 
 import { api } from "~/trpc/react";
 
 export function CreatePostForm() {
   const form = useForm({
-    schema: CreatePostSchema,
+    schema: createPostSchema,
     defaultValues: {
       content: "",
       title: "",
@@ -132,7 +132,7 @@ export function PostCard(props: {
         <Button
           variant="ghost"
           className="cursor-pointer text-sm font-bold uppercase text-primary hover:bg-transparent hover:text-white"
-          onClick={() => deletePost.mutate(props.post.id)}
+          onClick={() => deletePost.mutate({id: props.post.id})}
         >
           Delete
         </Button>

@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { Button, Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, Stack } from "expo-router";
 import { FlashList } from "@shopify/flash-list";
 
 import type { RouterOutputs } from "~/utils/api";
 import { api } from "~/utils/api";
-import { useSignIn, useSignOut, useUser } from "~/utils/auth";
 
 function PostCard(props: {
   post: RouterOutputs["post"]["all"][number];
@@ -95,25 +94,6 @@ function CreatePost() {
   );
 }
 
-function MobileAuth() {
-  const user = useUser();
-  const signIn = useSignIn();
-  const signOut = useSignOut();
-
-  return (
-    <>
-      <Text className="pb-2 text-center text-xl font-semibold text-white">
-        {user?.name ?? "Not logged in"}
-      </Text>
-      <Button
-        onPress={() => (user ? signOut() : signIn())}
-        title={user ? "Sign Out" : "Sign In With Discord"}
-        color={"#5B65E9"}
-      />
-    </>
-  );
-}
-
 export default function Index() {
   const utils = api.useUtils();
 
@@ -132,8 +112,6 @@ export default function Index() {
           Create <Text className="text-primary">T3</Text> Turbo
         </Text>
 
-        <MobileAuth />
-
         <View className="py-2">
           <Text className="font-semibold italic text-primary">
             Press on a post
@@ -147,7 +125,7 @@ export default function Index() {
           renderItem={(p) => (
             <PostCard
               post={p.item}
-              onDelete={() => deletePostMutation.mutate(p.item.id)}
+              onDelete={() => deletePostMutation.mutate({id: p.item.id})}
             />
           )}
         />

@@ -1,40 +1,50 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import { z } from "zod";
 
-import { desc, eq } from "@acme/db";
-import { CreatePostSchema, Post } from "@acme/db/schema";
+import { publicProcedure } from "../trpc";
 
-import { protectedProcedure, publicProcedure } from "../trpc";
+import { createPostSchema, postSchema  } from '@acme/validators'
+import type {Post} from '@acme/validators';
+
+const posts : Post[] = [
+  {
+    id: "1",
+    title: "Hello, World!",
+    content: "This is my first post.",
+  },
+  {
+    id: "2",
+    title: "Hello, Again!",
+    content: "This is my second post.",
+  },
+]
+
+let nextId = posts.length + 1;
 
 export const postRouter = {
-  all: publicProcedure.query(({ ctx }) => {
-    // return ctx.db.select().from(schema.post).orderBy(desc(schema.post.id));
-    return ctx.db.query.Post.findMany({
-      orderBy: desc(Post.id),
-      limit: 10,
-    });
+  all: publicProcedure.query(() => {
+    return posts
   }),
 
   byId: publicProcedure
-    .input(z.object({ id: z.string() }))
-    .query(({ ctx, input }) => {
-      // return ctx.db
-      //   .select()
-      //   .from(schema.post)
-      //   .where(eq(schema.post.id, input.id));
+    .input(postSchema.pick({ id: true }))
+    .query(({ input }) => {
+      return posts.find((post) => post.id === input.id);
+    }),
 
-      return ctx.db.query.Post.findFirst({
-        where: eq(Post.id, input.id),
+  create: publicProcedure
+    .input(createPostSchema)
+    .mutation(({ input }) => {
+      posts.push({
+        id: String(nextId++),
+        title: input.title,
+        content: input.content,
       });
     }),
 
-  create: protectedProcedure
-    .input(CreatePostSchema)
-    .mutation(({ ctx, input }) => {
-      return ctx.db.insert(Post).values(input);
-    }),
-
-  delete: protectedProcedure.input(z.string()).mutation(({ ctx, input }) => {
-    return ctx.db.delete(Post).where(eq(Post.id, input));
+  delete: publicProcedure.input(postSchema.pick({id: true})).mutation(({ input }) => {
+    return posts.splice(
+      posts.findIndex((post) => post.id === input.id),
+      1
+    );
   }),
 } satisfies TRPCRouterRecord;

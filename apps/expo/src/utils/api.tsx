@@ -1,22 +1,28 @@
+import type { EventSourcePolyfillInit } from "event-source-polyfill";
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { httpBatchLink, loggerLink, splitLink, unstable_httpSubscriptionLink } from "@trpc/client";
+import {
+  httpBatchLink,
+  loggerLink,
+  splitLink,
+  unstable_httpSubscriptionLink,
+} from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
+import { EventSourcePolyfill, NativeEventSource } from "event-source-polyfill";
 import superjson from "superjson";
+import { ReadableStream, TransformStream } from "web-streams-polyfill";
 
 import type { AppRouter } from "@acme/api";
 
 import { getBaseUrl } from "./base-url";
+
+import "@azure/core-asynciterator-polyfill";
 
 /**
  * A set of typesafe hooks for consuming your API.
  */
 export const api = createTRPCReact<AppRouter>();
 export { type RouterInputs, type RouterOutputs } from "@acme/api";
-
-import { NativeEventSource, EventSourcePolyfill } from 'event-source-polyfill';
-
-import { ReadableStream, TransformStream } from 'web-streams-polyfill';
 
 // @ts-expect-error - Polyfill EventSource for React Native
 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -28,9 +34,8 @@ global.ReadableStream = global.ReadableStream || ReadableStream;
 global.TransformStream = global.TransformStream || TransformStream;
 
 declare global {
-  interface EventSourceInit {
-    headers?: Record<string, string>;
-  }
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  interface EventSourceInit extends EventSourcePolyfillInit {}
 }
 
 /**
@@ -56,7 +61,7 @@ export function TRPCProvider(props: { children: React.ReactNode }) {
             headers() {
               const headers = new Map<string, string>();
               headers.set("x-trpc-source", "expo-react");
-  
+
               return Object.fromEntries(headers);
             },
           }),
@@ -66,10 +71,11 @@ export function TRPCProvider(props: { children: React.ReactNode }) {
             eventSourceOptions: {
               headers: {
                 "x-trpc-source": "expo-http-subscription",
-              }
-            }
-          })
-        })
+              },
+              heartbeatTimeout: Number.POSITIVE_INFINITY,
+            },
+          }),
+        }),
       ],
     }),
   );

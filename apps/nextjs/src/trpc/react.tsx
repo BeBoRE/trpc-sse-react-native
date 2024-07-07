@@ -3,7 +3,12 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { loggerLink, splitLink, unstable_httpBatchStreamLink, unstable_httpSubscriptionLink } from "@trpc/client";
+import {
+  loggerLink,
+  splitLink,
+  unstable_httpBatchStreamLink,
+  unstable_httpSubscriptionLink,
+} from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import SuperJSON from "superjson";
 
@@ -51,7 +56,7 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
             transformer: SuperJSON,
             url: getBaseUrl() + "/api/trpc",
           }),
-        })
+        }),
       ],
     }),
   );

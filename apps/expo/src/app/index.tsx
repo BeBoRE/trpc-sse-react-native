@@ -1,12 +1,18 @@
-import { useEffect, useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { useState } from "react";
+import {
+  KeyboardAvoidingView,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, Stack } from "expo-router";
+import { useHeaderHeight } from "@react-navigation/elements";
 import { FlashList } from "@shopify/flash-list";
 
 import type { RouterOutputs } from "~/utils/api";
 import { api } from "~/utils/api";
-import { getBaseUrl } from "~/utils/base-url";
 
 function PostCard(props: {
   post: RouterOutputs["post"]["all"][number];
@@ -104,64 +110,49 @@ export default function Index() {
     onSettled: () => utils.post.all.invalidate(),
   });
 
+  const headerHeight = useHeaderHeight();
+
   // This subscription does not work
   api.post.postEvent.useSubscription(undefined, {
     onData() {
       void utils.post.all.invalidate();
-
-      alert('New post from subscription')
-    }
-  })
-
-  // But giving it the url manually it does work
-  useEffect(() => {
-    const es = new EventSource(
-        `${getBaseUrl()}/api/trpc/post.postEvent?input=%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%7D%7D`, {
-          headers: {
-            'x-trpc-source': 'expo-manual-event-source'
-          }
-        });
-
-    es.onmessage = () => {
-      void utils.post.all.invalidate();
-
-      alert('New post from manual event-source')
-    }
-  
-    return () => {
-      es.close();
-    }
-  })
+    },
+  });
 
   return (
     <SafeAreaView className="bg-background">
-      {/* Changes page title visible on the header */}
-      <Stack.Screen options={{ title: "Home Page" }} />
-      <View className="h-full w-full bg-background p-4">
-        <Text className="pb-2 text-center text-5xl font-bold text-foreground">
-          Create <Text className="text-primary">T3</Text> Turbo
-        </Text>
-
-        <View className="py-2">
-          <Text className="font-semibold italic text-primary">
-            Press on a post
+      <KeyboardAvoidingView
+        behavior="padding"
+        keyboardVerticalOffset={headerHeight}
+      >
+        {/* Changes page title visible on the header */}
+        <Stack.Screen options={{ title: "Home Page" }} />
+        <View className="h-full w-full bg-background p-4">
+          <Text className="pb-2 text-center text-5xl font-bold text-foreground">
+            Create <Text className="text-primary">T3</Text> Turbo
           </Text>
+
+          <View className="py-2">
+            <Text className="font-semibold italic text-primary">
+              Press on a post
+            </Text>
+          </View>
+
+          <FlashList
+            data={postQuery.data}
+            estimatedItemSize={20}
+            ItemSeparatorComponent={() => <View className="h-2" />}
+            renderItem={(p) => (
+              <PostCard
+                post={p.item}
+                onDelete={() => deletePostMutation.mutate({ id: p.item.id })}
+              />
+            )}
+          />
+
+          <CreatePost />
         </View>
-
-        <FlashList
-          data={postQuery.data}
-          estimatedItemSize={20}
-          ItemSeparatorComponent={() => <View className="h-2" />}
-          renderItem={(p) => (
-            <PostCard
-              post={p.item}
-              onDelete={() => deletePostMutation.mutate({id: p.item.id})}
-            />
-          )}
-        />
-
-        <CreatePost />
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

@@ -23,7 +23,7 @@ export const OPTIONS = () => {
   return response;
 };
 
-const handler = async (req : Request) => {
+const handler = async (req: Request) => {
   const response = await fetchRequestHandler({
     endpoint: "/api/trpc",
     router: appRouter,

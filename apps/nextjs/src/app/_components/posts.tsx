@@ -18,7 +18,7 @@ import { createPostSchema } from "@acme/validators";
 import { api } from "~/trpc/react";
 
 // Opt out of caching for all data requests in the route segment
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 export function CreatePostForm() {
   const form = useForm({
@@ -90,7 +90,7 @@ export function PostList() {
   api.post.postEvent.useSubscription(undefined, {
     onData() {
       void utils.post.all.invalidate();
-    }
+    },
   });
 
   if (posts.length === 0) {
@@ -143,7 +143,7 @@ export function PostCard(props: {
         <Button
           variant="ghost"
           className="cursor-pointer text-sm font-bold uppercase text-primary hover:bg-transparent hover:text-white"
-          onClick={() => deletePost.mutate({id: props.post.id})}
+          onClick={() => deletePost.mutate({ id: props.post.id })}
         >
           Delete
         </Button>

@@ -1,14 +1,13 @@
+import { EventEmitter } from "node:events";
 import type { TRPCRouterRecord } from "@trpc/server";
+import { observable } from "@trpc/server/observable";
+
+import type { Post } from "@acme/validators";
+import { createPostSchema, postSchema } from "@acme/validators";
 
 import { publicProcedure } from "../trpc";
 
-import { createPostSchema, postSchema  } from '@acme/validators'
-import type {Post} from '@acme/validators';
-
-import { EventEmitter } from 'node:events'
-import { observable } from "@trpc/server/observable";
-
-const posts : Post[] = [
+const posts: Post[] = [
   {
     id: "1",
     title: "Hello, World!",
@@ -19,7 +18,7 @@ const posts : Post[] = [
     title: "Hello, Again!",
     content: "This is my second post.",
   },
-]
+];
 
 let nextId = posts.length + 1;
 
@@ -29,7 +28,7 @@ const ee = new EventEmitter<{
 
 export const postRouter = {
   all: publicProcedure.query(() => {
-    return posts
+    return posts;
   }),
 
   byId: publicProcedure
@@ -38,50 +37,56 @@ export const postRouter = {
       return posts.find((post) => post.id === input.id);
     }),
 
-  create: publicProcedure
-    .input(createPostSchema)
-    .mutation(({ input }) => {
-      const newPost = {
-        id: String(nextId++),
-        title: input.title,
-        content: input.content,
-      };
+  create: publicProcedure.input(createPostSchema).mutation(({ input }) => {
+    const newPost = {
+      id: String(nextId++),
+      title: input.title,
+      content: input.content,
+    };
 
-      posts.push(newPost);
+    posts.push(newPost);
 
-      ee.emit('update')
-    }),
+    ee.emit("update");
 
-  delete: publicProcedure.input(postSchema.pick({id: true})).mutation(({ input }) => {
-    return posts.splice(
-      posts.findIndex((post) => post.id === input.id),
-      1
-    );
+    return newPost;
   }),
 
-  update: publicProcedure
-    .input(postSchema)
+  delete: publicProcedure
+    .input(postSchema.pick({ id: true }))
     .mutation(({ input }) => {
-      const post = posts.find((post) => post.id === input.id);
-      if (!post) {
-        throw new Error("Post not found");
-      }
+      ee.emit("update");
 
-      post.title = input.title;
-      post.content = input.content;
+      return posts.splice(
+        posts.findIndex((post) => post.id === input.id),
+        1,
+      );
     }),
+
+  update: publicProcedure.input(postSchema).mutation(({ input }) => {
+    const post = posts.find((post) => post.id === input.id);
+    if (!post) {
+      throw new Error("Post not found");
+    }
+
+    post.title = input.title;
+    post.content = input.content;
+
+    ee.emit("update");
+
+    return post;
+  }),
 
   postEvent: publicProcedure.subscription(() => {
     return observable<void>((emit) => {
       const onCreated = () => {
-        emit.next()
-      }
+        emit.next();
+      };
 
-      ee.on('update', onCreated)
+      ee.on("update", onCreated);
 
       return () => {
-        ee.off('update', onCreated)
-      }
-    })
-  })
+        ee.off("update", onCreated);
+      };
+    });
+  }),
 } satisfies TRPCRouterRecord;

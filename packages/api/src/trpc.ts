@@ -22,9 +22,7 @@ import { ZodError } from "zod";
  *
  * @see https://trpc.io/docs/server/context
  */
-export const createTRPCContext = (opts: {
-  headers: Headers;
-}) => {
+export const createTRPCContext = (opts: { headers: Headers }) => {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
   console.log(">>> tRPC Request from", source);
 
@@ -48,13 +46,14 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
   }),
   experimental: {
     sseSubscriptions: {
+      enabled: true,
       ping: {
         // Polyfill requires data to be sent at least every 45 seconds
         enabled: true,
-        intervalMs: 15_000,
-      }
-    }
-  }
+        intervalMs: 5 * 1000,
+      },
+    },
+  },
 });
 
 /**

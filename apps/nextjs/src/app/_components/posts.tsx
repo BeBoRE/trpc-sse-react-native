@@ -17,6 +17,9 @@ import { createPostSchema } from "@acme/validators";
 
 import { api } from "~/trpc/react";
 
+// Opt out of caching for all data requests in the route segment
+export const dynamic = 'force-dynamic'
+
 export function CreatePostForm() {
   const form = useForm({
     schema: createPostSchema,
@@ -81,6 +84,14 @@ export function CreatePostForm() {
 
 export function PostList() {
   const [posts] = api.post.all.useSuspenseQuery();
+
+  const utils = api.useUtils();
+
+  api.post.postEvent.useSubscription(undefined, {
+    onData() {
+      void utils.post.all.invalidate();
+    }
+  });
 
   if (posts.length === 0) {
     return (

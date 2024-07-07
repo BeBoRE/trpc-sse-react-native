@@ -5,6 +5,9 @@ import { publicProcedure } from "../trpc";
 import { createPostSchema, postSchema  } from '@acme/validators'
 import type {Post} from '@acme/validators';
 
+import { EventEmitter } from 'node:events'
+import { observable } from "@trpc/server/observable";
+
 const posts : Post[] = [
   {
     id: "1",
@@ -20,6 +23,10 @@ const posts : Post[] = [
 
 let nextId = posts.length + 1;
 
+const ee = new EventEmitter<{
+  update: [];
+}>();
+
 export const postRouter = {
   all: publicProcedure.query(() => {
     return posts
@@ -34,11 +41,15 @@ export const postRouter = {
   create: publicProcedure
     .input(createPostSchema)
     .mutation(({ input }) => {
-      posts.push({
+      const newPost = {
         id: String(nextId++),
         title: input.title,
         content: input.content,
-      });
+      };
+
+      posts.push(newPost);
+
+      ee.emit('update')
     }),
 
   delete: publicProcedure.input(postSchema.pick({id: true})).mutation(({ input }) => {
@@ -47,4 +58,30 @@ export const postRouter = {
       1
     );
   }),
+
+  update: publicProcedure
+    .input(postSchema)
+    .mutation(({ input }) => {
+      const post = posts.find((post) => post.id === input.id);
+      if (!post) {
+        throw new Error("Post not found");
+      }
+
+      post.title = input.title;
+      post.content = input.content;
+    }),
+
+  postEvent: publicProcedure.subscription(() => {
+    return observable<void>((emit) => {
+      const onCreated = () => {
+        emit.next()
+      }
+
+      ee.on('update', onCreated)
+
+      return () => {
+        ee.off('update', onCreated)
+      }
+    })
+  })
 } satisfies TRPCRouterRecord;

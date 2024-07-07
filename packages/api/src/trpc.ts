@@ -46,6 +46,15 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
       zodError: error.cause instanceof ZodError ? error.cause.flatten() : null,
     },
   }),
+  experimental: {
+    sseSubscriptions: {
+      ping: {
+        // Polyfill requires data to be sent at least every 45 seconds
+        enabled: true,
+        intervalMs: 15_000,
+      }
+    }
+  }
 });
 
 /**

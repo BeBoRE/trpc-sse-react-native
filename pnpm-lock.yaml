@@ -47,6 +47,9 @@ importers:
       '@trpc/server':
         specifier: 11.0.0-rc.449
         version: 11.0.0-rc.449
+      event-source-polyfill:
+        specifier: ^1.0.31
+        version: 1.0.31
       expo:
         specifier: ~51.0.18
         version: 51.0.18(@babel/core@7.24.7)(@babel/preset-env@7.24.7)
@@ -141,9 +144,6 @@ importers:
       eslint:
         specifier: ^9.6.0
         version: 9.6.0
-      event-source-polyfill:
-        specifier: ^1.0.31
-        version: 1.0.31
       prettier:
         specifier: ^3.3.2
         version: 3.3.2
@@ -6159,7 +6159,7 @@ packages:
 
   /event-source-polyfill@1.0.31:
     resolution: {integrity: sha512-4IJSItgS/41IxN5UVAVuAyczwZF7ZIEsM1XAoUzIHA6A+xzusEZUutdXz2Nr+MQPLxfTiCvqE79/C8HT8fKFvA==}
-    dev: true
+    dev: false
 
   /event-target-shim@5.0.1:
     resolution: {integrity: sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==}

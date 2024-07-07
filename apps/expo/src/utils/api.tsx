@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { httpBatchLink, loggerLink } from "@trpc/client";
+import { httpBatchLink, loggerLink, splitLink, unstable_httpSubscriptionLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import superjson from "superjson";
 
@@ -13,6 +13,11 @@ import { getBaseUrl } from "./base-url";
  */
 export const api = createTRPCReact<AppRouter>();
 export { type RouterInputs, type RouterOutputs } from "@acme/api";
+
+import { EventSourcePolyfill } from 'event-source-polyfill';
+
+// @ts-expect-error - Polyfill EventSource for React Native
+global.EventSource = EventSourcePolyfill;
 
 /**
  * A wrapper for your app that provides the TRPC context.
@@ -29,16 +34,28 @@ export function TRPCProvider(props: { children: React.ReactNode }) {
             (opts.direction === "down" && opts.result instanceof Error),
           colorMode: "ansi",
         }),
-        httpBatchLink({
-          transformer: superjson,
-          url: `${getBaseUrl()}/api/trpc`,
-          headers() {
-            const headers = new Map<string, string>();
-            headers.set("x-trpc-source", "expo-react");
-
-            return Object.fromEntries(headers);
-          },
-        }),
+        splitLink({
+          condition: (op) => op.type === "subscription",
+          false: httpBatchLink({
+            transformer: superjson,
+            url: `${getBaseUrl()}/api/trpc`,
+            headers() {
+              const headers = new Map<string, string>();
+              headers.set("x-trpc-source", "expo-react");
+  
+              return Object.fromEntries(headers);
+            },
+          }),
+          true: unstable_httpSubscriptionLink({
+            transformer: superjson,
+            url: `${getBaseUrl()}/api/trpc`,
+            eventSourceOptions: {
+              headers: {
+                "x-trpc-source": "expo-http-subscription",
+              }
+            }
+          })
+        })
       ],
     }),
   );

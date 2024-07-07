@@ -19,6 +19,12 @@ import { EventSourcePolyfill } from 'event-source-polyfill';
 // @ts-expect-error - Polyfill EventSource for React Native
 global.EventSource = EventSourcePolyfill;
 
+declare global {
+  interface EventSourceInit {
+    headers?: Record<string, string>;
+  }
+}
+
 /**
  * A wrapper for your app that provides the TRPC context.
  * Use only in _app.tsx

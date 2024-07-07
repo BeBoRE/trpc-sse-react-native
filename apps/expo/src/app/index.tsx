@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, Stack } from "expo-router";
@@ -6,6 +6,7 @@ import { FlashList } from "@shopify/flash-list";
 
 import type { RouterOutputs } from "~/utils/api";
 import { api } from "~/utils/api";
+import { getBaseUrl } from "~/utils/base-url";
 
 function PostCard(props: {
   post: RouterOutputs["post"]["all"][number];
@@ -103,9 +104,32 @@ export default function Index() {
     onSettled: () => utils.post.all.invalidate(),
   });
 
+  // This subscription does not work
   api.post.postEvent.useSubscription(undefined, {
     onData() {
       void utils.post.all.invalidate();
+
+      alert('New post from subscription')
+    }
+  })
+
+  // But giving it the url manually it does work
+  useEffect(() => {
+    const es = new EventSource(
+        `${getBaseUrl()}/api/trpc/post.postEvent?input=%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%7D%7D`, {
+          headers: {
+            'x-trpc-source': 'expo-manual-event-source'
+          }
+        });
+
+    es.onmessage = () => {
+      void utils.post.all.invalidate();
+
+      alert('New post from manual event-source')
+    }
+  
+    return () => {
+      es.close();
     }
   })
 
